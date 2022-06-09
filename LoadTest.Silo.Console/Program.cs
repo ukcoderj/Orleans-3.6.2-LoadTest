@@ -112,7 +112,7 @@ try
         .UseAzureStorageClustering(options =>
         {
             options.ConfigureTableServiceClient(clusterStorageInfo.StorageUri, clusterStorageInfo.SasCredential);
-            //options.TableName = "{whatever you call this, you need to add manually in table storage}";
+            //options.TableName = "{whatever you call this, you need to add manually in table storage - default is 'OrleansSiloInstances'}";
         })
         .Configure<ClusterOptions>(options =>
         {

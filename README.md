@@ -29,7 +29,7 @@ The project also creates a test console for sending such data to the cluster and
 1. Open in Visual Studio (2022)
 2. In `LoadTest.Silo.Console`, Fill in `appsettings.json` or `secrets.json` from `example-secrets.json`. Don't copy over the comments!
 
-3. In the Azure Portal (or PowerShell), create a Storage Account for the cluster. In that, add a table called 'OrleansSiloInstances'. Generate + copy a SAS token and note the storage account name for putting into the settings.
+3. In the Azure Portal (or PowerShell), create a Storage Account for the cluster. In that, add a table called `OrleansSiloInstances`. Generate + copy a SAS token and note the storage account name for putting into the settings.
 
 4. In the Azure Portal (or PowerShell), create at least 1 Storage Account for saving grain data. For each one, note the storage account name, generate a SAS token and copy the info into the settings. 
 
