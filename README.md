@@ -6,11 +6,11 @@ A simple orleans cluster for performance testing, with test console.
 
 The main parts for this project are
 
-1. `LoadTest.Silo.Console` - includes a setup for a clustered silo setup. 
+1. `LoadTest.Silo.Console` - includes a setup for a clustered silo. 
 
 - The format of the information required to run the silo can be found in `example-secrets.json`. You can put this info in `appsettings.json` or `secrets.json`.
 
-- The silo will load references to table storage for both the cluster and silo data
+- When running, the silo will load references to table storage for both the cluster and silo data
 
 - In the event there are more silos than storage accounts, the storage accounts will be shared as evenly as possible.
 
