@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>dc1b3e74-c0bf-45f5-9f71-526bef4bad52</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+    <None Remove="example-secrets.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="example-secrets.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Clustering.AzureStorage" Version="3.6.2" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="3.6.2" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.2" />
+    <PackageReference Include="OrleansDashboard" Version="3.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoadTest.Grains\LoadTest.Grains.csproj" />
+  </ItemGroup>
+
+</Project>
