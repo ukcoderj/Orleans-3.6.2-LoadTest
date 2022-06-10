@@ -1,5 +1,6 @@
 ﻿using LoadTest.Grains.Interfaces;
 using LoadTest.Grains.Interfaces.Models;
+using LoadTest.SharedBase.Helpers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Orleans;
@@ -31,25 +32,54 @@ namespace OrleansLoadTestConsole
                     options.ServiceId = "OrleansLoadTest";
 
                 })
-                .ConfigureLogging(logging => logging.AddConsole())
+                .ConfigureLogging(logging => logging.AddConsole().SetMinimumLevel(LogLevel.Error))
                 .Build();
 
             await _client.Connect();
         }
 
+        public async Task WarmUp(int grainId)
+        {
+            try
+            {
+                var grain = _client.GetGrain<INumberStoreGrain>(grainId);
+                await grain.WarmUp();
+            }
+            catch (Exception ex)
+            {
+                DisplayHelper.WriteLine(ex.ToString(), ConsoleColor.Red);
+            }
+
+
+        }
+
         public async Task Post(DataClass data)
         {
-            var grain = _client.GetGrain<INumberStoreGrain>(data.GrainId);
-            await grain.UpdateNumberInfo(data.NumberInfo);
-            Console.WriteLine($"Success: {data.GrainId}");
+            try
+            {
+                var grain = _client.GetGrain<INumberStoreGrain>(data.GrainId);
+                await grain.UpdateNumberInfo(data.NumberInfo);
+            }
+            catch (Exception ex)
+            {
+                DisplayHelper.WriteLine(ex.ToString(), ConsoleColor.Red);
+            }
         }
 
 
         public async Task<NumberInfo> GetGrainData(int grainId)
         {
-            var grain = _client.GetGrain<INumberStoreGrain>(grainId);
-            var currentState = await grain.GetState();
-            return currentState;
+            NumberInfo retVal = new NumberInfo(-1, new DateTime());
+            try
+            {
+                var grain = _client.GetGrain<INumberStoreGrain>(grainId);
+                retVal = await grain.GetState();
+            }
+            catch (Exception ex)
+            {
+                DisplayHelper.WriteLine(ex.ToString(), ConsoleColor.Red);
+            }
+            return retVal;
         }
 
         public void Dispose()

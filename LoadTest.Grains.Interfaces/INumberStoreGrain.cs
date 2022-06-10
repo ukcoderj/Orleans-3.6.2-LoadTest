@@ -11,6 +11,8 @@ namespace LoadTest.Grains.Interfaces
     [Version(1)]
     public interface INumberStoreGrain : Orleans.IGrainWithIntegerKey
     {
+        Task WarmUp();
+
         Task<NumberInfo> GetState();
 
         Task UpdateNumberInfo(NumberInfo input);

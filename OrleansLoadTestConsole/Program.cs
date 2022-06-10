@@ -24,6 +24,7 @@ try
     {
         DisplayHelper.WriteLine("Press 'c' or 's' to target the console silo, or 'w' to target the website");
         key = Console.ReadKey().Key;
+        Console.WriteLine();
 
         if (key == ConsoleKey.W)
         {
@@ -69,6 +70,8 @@ try
         int.TryParse(splitVals[1], out maxGrainNumber);
     }
 
+    var numberOfGrains = (maxGrainNumber - minGrainNumber) + 1;
+
     Console.WriteLine("Setting up the information for sending now to save a few milliseconds");
 
     List<DataClass> numberAndGrainPosts = new List<DataClass>();
@@ -89,89 +92,173 @@ try
 
     ConsoleKey consoleKey = ConsoleKey.Y;
 
-    while(consoleKey == ConsoleKey.Y)
+    bool hasAlreadyRun = false;
+    bool shouldWaitForOtherConsoles = true;
+
+    while (consoleKey == ConsoleKey.Y)
     {
 
         DisplayHelper.WriteLine($"Great! Set up for grains {minGrainNumber}-{maxGrainNumber}");
 
 
-        DisplayHelper.WriteLine($"Press 'Enter' when all consoles are ready to push data", ConsoleColor.White);
+        DisplayHelper.WriteLine($"Warming up grains {minGrainNumber}-{maxGrainNumber}...", ConsoleColor.Yellow);
+        List<Task> taskList = new List<Task>();
 
-        Console.ReadLine();
-
-
-        DisplayHelper.WriteLine("Wait for the 0 or 30s mark to start", ConsoleColor.Yellow);
-
-
-        while (1 == 1)
-        {
-            var nowSeconds = DateTime.Now.Second;
-
-            if (nowSeconds == 0 ||
-                nowSeconds == 1 ||
-                nowSeconds == 30 ||
-                nowSeconds == 31)
-            {
-                break;
-            }
-
-            Thread.Sleep(10);
-        }
-
-
-
+        Stopwatch st = new Stopwatch();
+        st.Start();
 
         // Send the data
         foreach (var row in numberAndGrainPosts)
         {
-            Stopwatch st = new Stopwatch();
-            st.Start();
+            taskList.Add(testCalls.WarmUp(row.GrainId));
+        }
 
-            // TODO: Consider not awaiting for speed? Maybe even kick off a new thread? Task.Run()
-            await testCalls.Post(row);
+        Task.WaitAll(taskList.ToArray());
 
-            st.Stop();
-            msTaken.Add(st.ElapsedMilliseconds);
+        st.Stop();
+        DisplayHelper.WriteLine($"Warm up time - {numberOfGrains} grains = {st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
+
+
+        if (!hasAlreadyRun)
+        {
+            DisplayHelper.WriteLine("Skip waiting for other consoles? Y = Go now, anything else = wait for 0/30s mark");
+            shouldWaitForOtherConsoles = Console.ReadKey().Key != ConsoleKey.Y;
+            Console.WriteLine();
         }
 
 
-        DisplayHelper.WriteLine($"Console Total Time: {msTaken.Sum()}ms, Average Time: {msTaken.Average()}ms");
+        if (shouldWaitForOtherConsoles)
+        {
+            DisplayHelper.WriteLine("Wait for the 0 or 30s mark to start", ConsoleColor.Yellow);
+
+            while (1 == 1)
+            {
+                var nowSeconds = DateTime.Now.Second;
+
+                if (nowSeconds == 0 ||
+                    nowSeconds == 1 ||
+                    nowSeconds == 30 ||
+                    nowSeconds == 31)
+                {
+                    break;
+                }
+
+                Thread.Sleep(10);
+            }
+        }
 
 
-        Console.WriteLine("Wait 30s to get grain data back");
+        // Send the data
+        DisplayHelper.WriteLine("Sending data (not logging for speed)...", ConsoleColor.Cyan);
 
-        Thread.Sleep(30000);
+        st.Reset();
+        st.Start();
+        // Data starts sending before WaitAll
+        foreach (var row in numberAndGrainPosts)
+        {
+            taskList.Add(testCalls.Post(row));
+        }
+
+        Task.WaitAll(taskList.ToArray());
+
+        st.Stop();
+        msTaken.Add(st.ElapsedMilliseconds);
+
+        
+        DisplayHelper.WriteLine($"Client Task time - {numberOfGrains} grains ={st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
+        var clientRate = (decimal)(numberOfGrains) / (decimal)(st.ElapsedMilliseconds / (decimal)1000);
+        var clientRateRounded = decimal.Round(clientRate, 2, MidpointRounding.AwayFromZero);
+        DisplayHelper.WriteLine($"Client Task rate = {clientRateRounded}/s", ConsoleColor.Yellow);
+
+        var minGrainNumToCheck = 0;
+        var maxGrainNumToCheck = 0;
+
+        if (shouldWaitForOtherConsoles)
+        {
+
+            DisplayHelper.WriteLine("Do you want to get an accurate reading for multiple consoles (Y/N)?");
+
+            if (Console.ReadKey().Key == ConsoleKey.Y)
+            {
+                while (minGrainNumToCheck == 0 && maxGrainNumToCheck == 0)
+                {
+                    Console.WriteLine();
+                    DisplayHelper.WriteLine("Enter the min grain number and max grain number (e.g. '1-5000')");
+                    DisplayHelper.WriteLine("make sure all consoles have finished before doing this!!!");
+
+                    var input = Console.ReadLine() ?? "";
+
+                    if (input == "exit" || input == "e")
+                    {
+                        return;
+                    }
+
+                    if (!input.Contains("-")) continue;
+
+                    var splitVals = input.Split("-");
+                    int.TryParse(splitVals[0], out minGrainNumToCheck);
+                    int.TryParse(splitVals[1], out maxGrainNumToCheck);
+                }
 
 
-        var grain1Info = await testCalls.GetGrainData(1);
-        var minGrainInfo = await testCalls.GetGrainData(minGrainNumber);
-        var maxGrainInfo = await testCalls.GetGrainData(maxGrainNumber);
+                DisplayHelper.WriteLine("Getting data (not logging as we go to speed things up)....", ConsoleColor.Yellow);
+            }
+
+        }
+
+        // Just this console.
+        if (minGrainNumToCheck == 0 && maxGrainNumToCheck == 0)
+        {
+            minGrainNumToCheck = minGrainNumber;
+            maxGrainNumToCheck = maxGrainNumber;
+        }
 
 
-        TimeSpan spanMinToMax = maxGrainInfo.DateTimeReceived - minGrainInfo.DateTimeReceived;
+        NumberInfo minNumberInfo = null;
+        NumberInfo maxNumberInfo = null;
+
+        for (int i = minGrainNumToCheck; i <= maxGrainNumToCheck; i++)
+        {
+            var tmp = await testCalls.GetGrainData(i);
+
+            if (tmp == null || tmp.DateTimeReceived == new DateTime())
+                continue;
+
+            if (minNumberInfo == null && maxNumberInfo == null)
+            {
+                minNumberInfo = tmp;
+                maxNumberInfo = tmp;
+            }
+            else if (tmp.DateTimeReceived > maxNumberInfo.DateTimeReceived)
+            {
+                maxNumberInfo = tmp;
+            }
+            else if (tmp.DateTimeReceived < minNumberInfo.DateTimeReceived)
+            {
+                minNumberInfo = tmp;
+            }
+        }
+
+        var minDateString = minNumberInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+        var maxDateString = maxNumberInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+        DisplayHelper.WriteLine($"Min: Grain {minNumberInfo.Number.ToString().PadRight(5)}: Date:{minDateString}");
+        DisplayHelper.WriteLine($"Min: Grain {maxNumberInfo.Number.ToString().PadRight(5)}: Date:{maxDateString}");
+
+        TimeSpan spanMinToMax = maxNumberInfo.DateTimeReceived - minNumberInfo.DateTimeReceived;
         var msMinToMax = spanMinToMax.TotalMilliseconds;
-        var ctMinToMaxPerSecond = ((maxGrainNumber - minGrainNumber) + 1) / ((decimal)msMinToMax / 1000);
+        var msMinToMaxNumGrains = maxGrainNumToCheck - minGrainNumToCheck - 1;
+        var ctMinToMaxPerSecond = (decimal)(msMinToMaxNumGrains) / ((decimal)msMinToMax / (decimal)1000);
         var ctMinToMaxPerSecondRound = decimal.Round(ctMinToMaxPerSecond, 2, MidpointRounding.AwayFromZero);
-        DisplayHelper.WriteLine($"This console: Time from grain {minGrainNumber} - {maxGrainNumber} = {msMinToMax}ms ({ctMinToMaxPerSecondRound}/s)");
 
+        DisplayHelper.WriteLine($"All consoles: Time from grain {minGrainNumToCheck} - {maxGrainNumToCheck} = {spanMinToMax.TotalMilliseconds}ms ({ctMinToMaxPerSecondRound}/s)");
 
-
-        TimeSpan span1ToMax = maxGrainInfo.DateTimeReceived - grain1Info.DateTimeReceived;
-        var ms1ToMax = span1ToMax.TotalMilliseconds;
-        var ct1ToMaxPerSecond = (maxGrainNumber) / ((decimal)ms1ToMax / 1000);
-        var ct1ToMaxPerSecondRound = decimal.Round(ct1ToMaxPerSecond, 2, MidpointRounding.AwayFromZero);
-        DisplayHelper.WriteLine("The next value is only useful for the final console....");
-        var grain1DateString = grain1Info.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-        DisplayHelper.WriteLine($"Grain 1: {grain1DateString}");
-        var grainMaxDateString = maxGrainInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-        DisplayHelper.WriteLine($"Grain {maxGrainNumber}: {grainMaxDateString}");
-        DisplayHelper.WriteLine($"All consoles [provided all finished in time]: Time from grain 1 - {maxGrainNumber} = {span1ToMax.Milliseconds}ms ({ct1ToMaxPerSecondRound}/s)");
 
         Console.WriteLine();
         Console.WriteLine();
         DisplayHelper.WriteLine("Press 'y' or 'Y' to redo the test, or any other key to start exiting.");
         consoleKey = Console.ReadKey().Key;
-
+        hasAlreadyRun = true;
     }
 
 

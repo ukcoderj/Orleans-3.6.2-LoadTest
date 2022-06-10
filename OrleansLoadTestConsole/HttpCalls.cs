@@ -25,6 +25,11 @@ namespace OrleansLoadTestConsole
 
         }
 
+        public async Task WarmUp(int grainId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task Post(DataClass data)
         {
             var api = "/NumberStore";
@@ -35,7 +40,7 @@ namespace OrleansLoadTestConsole
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Success: {data.GrainId}");
+                //Console.WriteLine($"Success: {data.GrainId}");
             }
             else
             {

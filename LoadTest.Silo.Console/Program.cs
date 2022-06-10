@@ -107,7 +107,7 @@ try
                 options.UseJson = true;
                 options.ConfigureTableServiceClient(grainStorageInfo.StorageUri, grainStorageInfo.SasCredential);
             })
-        .UseDashboard(options => { })
+        //.UseDashboard(options => { }) -- Dashboard Hoofed for now (performance)
         //.UseLocalhostClustering()
         .UseAzureStorageClustering(options =>
         {
@@ -133,7 +133,9 @@ try
             nameof(MinimumVersion);
         })
         .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(NumberStoreGrain).Assembly).WithReferences())
-        .ConfigureLogging(logging => logging.AddConsole());
+        .ConfigureLogging(logging =>
+            logging.AddConsole().SetMinimumLevel(LogLevel.Error)
+        );
 
     var host = builder.Build();
     await host.StartAsync();

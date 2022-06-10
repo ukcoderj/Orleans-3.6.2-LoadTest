@@ -43,20 +43,25 @@ namespace LoadTest.Grains
             return base.OnActivateAsync();
         }
 
+        public Task WarmUp()
+        {
+            return Task.CompletedTask;
+        }
+
 
         public Task<NumberInfo> GetState() => Task.FromResult(this._state.State);
 
         public async Task UpdateNumberInfo(NumberInfo input)
         {
-            Stopwatch st = new Stopwatch();
-            st.Start();
+            //Stopwatch st = new Stopwatch();
+            //st.Start();
 
             var inputUpdated = new NumberInfo(input.Number, DateTime.UtcNow);
             this._state.State = inputUpdated;
             await this._state.WriteStateAsync();
 
-            st.Stop();
-            Console.WriteLine($"Save: {this.GrainReference}: {st.ElapsedMilliseconds}ms");
+            //st.Stop();
+            //Console.WriteLine($"Save: {this.GrainReference}: {st.ElapsedMilliseconds}ms");
         }
     }
 }
