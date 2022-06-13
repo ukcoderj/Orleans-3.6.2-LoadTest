@@ -54,13 +54,55 @@ The 10 client consoles have been inputting 1-499, 500-999, 1000-1499 ... up to 5
 Tests (5000 requests total)
 
 Local Tests
-1. Local - 1 storage account  - Trial 5 silos and 5 consoles - 137/s (new grains 32ms repsonse). Re-run= 235/s (grains ready, ave response 20ms)
-2. Local - 2 storage accounts - Trial 6 silos and 5 consoles -  136/s (new grains 32ms repsonse). Re-run= 256/s (grains ready, ave response 19ms)
 
 Azure VM - Standard DS3 v2 (4 vcpus, 14 GiB memory)
-  1. Azure - 1 storage account   - Trial 1 silo and 1 console - 58/s (new grains 11ms response). Re-run= 154/s (grains ready, 6m average response)
-  2. Azure - 2 storage accounts  - Trial 5 silos and 5 consoles - 271/s (new grains 18ms repsonse). Re-run= 317/s (grains ready, ave response 15ms) - save time alone 4-5ms
-  3. Azure - 10 storage accounts - Trial 10 silos and 10 consoles 316/s (new grains 31ms response). Re-run= 500/s (grains ready, ave response 20ms) - save time 4-10ms. Subsequent runs got up to 700req/s.
+
+  1. Azure - - Trial 5 silos (with a storage account for each) and 2 client consoles - client task rate approx 2k/s - 5315/s overall. Re-run= client 6.4K/s, Overall 16,145/s.
+
+  2. 10 Silos (each with a storage account) - 2 client consoles - client task rate 633/s. Re-run = client x, Overall 6-22K/s. CPU maxing out at 100%.
+
+  3. 4 client consoles, 10 Silos (each with a storage account)
+  - (CPU maxing out at 100%, no memory issues)
+  Warm up rate 88,000 requests/s
+   First run 8802/s. 
+   Second Run 12,419/s
+
+   4. 1 Client console, 10 Silos (each with a storage account) 
+  - (CPU maxing out at 100%, no memory issues)
+   Warm up rate 58,823/s
+   First run 3065/s  (client running at 1.2K/s)
+   Second Run 16,159/s (client running at 14K/s) - warm up rate 102K
+   Third Run 4,344/s
+
+5. Tried removing 5 silos- many errors bought system to stand still with some errors. Warm up time rate just 300/s.
+   System then recovered to 1.7K/s, then on the next run to 12K/s, then 6.8K/s with warm up rate 90K/s.
+
+  
+  Azure F16s v2
+
+  10 silos
+  1 client console
+  Run 1: Warm up 5784ms (1.7K/s). Data 7.4k/s
+  Run 2: Warm up 89K/s. Data 4.6K/s
+  Run 3: Data 5K/s
+
+  5 silos
+  1 client console
+  Run 1: Warm up - very slow 2K/s. Data 15K/s
+  Run 2: Warm up 72K/s. Data 7.5K/s
+  Run 3: Warm up 113K/s. Data 7.5K/s
+  Run 4: Warm up 66K/s Data 7K/s
+
+
+  5 silos 100K in (1 console)
+  Run 1: Warm up 3k/s. Run failed.
+  Run 2: 66K/s. Data 5K/s
+  Run 3 Data 4K/s
+  Run 4: Data 22K/s
+  Run 5: Data 16K/s
+  Run 6: Data 18K/s
+
+  Need to reset to be 100% sure.
 
 
 
