@@ -1,4 +1,5 @@
 using LoadTest.Grains;
+using LoadTest.SharedBase.Models;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -7,6 +8,12 @@ using Orleans.Versions.Selector;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var config = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .AddUserSecrets<Program>()
+            .Build();
 
 // Add services to the container.
 
@@ -18,6 +25,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
+var storageAccountName = config.GetValue<string>("StorageAccountWeb:AcctName");
+var storageAccountSas = config.GetValue<string>("StorageAccountWeb:Sas");
+var storageAccountUrlString = $"https://{storageAccountName}.table.core.windows.net/";
+StorageConnectionInfo storageInfo = new StorageConnectionInfo(storageAccountUrlString, storageAccountSas);
+
+
+
 builder.Host.UseOrleans(siloBuilder =>
 {
     siloBuilder.AddAzureTableGrainStorage(
@@ -25,7 +39,8 @@ builder.Host.UseOrleans(siloBuilder =>
                     configureOptions: options =>
                     {
                         options.UseJson = true;
-                        options.ConfigureTableServiceClient("UseDevelopmentStorage=true");
+                        options.ConfigureTableServiceClient(storageInfo.StorageUri, storageInfo.SasCredential);
+                        //options.ConfigureTableServiceClient("UseDevelopmentStorage=true");
                     })
                 .UseLocalhostClustering()
                 .Configure<ClusterOptions>(options =>

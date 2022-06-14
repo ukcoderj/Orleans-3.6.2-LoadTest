@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 
 
-
 Console.WriteLine("Run load test");
 
 
@@ -47,6 +46,13 @@ try
 
     int minGrainNumber = 0;
     int maxGrainNumber = 0;
+    string dateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
+
+
+    DisplayHelper.WriteLine("Should this console be multi-threaded? N/n = No, anything else = Yes.");
+    bool useMultiThreading = Console.ReadKey().Key != ConsoleKey.N;
+    Console.WriteLine();
+
 
     while (minGrainNumber == 0 && maxGrainNumber == 0)
     {
@@ -90,11 +96,38 @@ try
         numberAndGrainPosts.Add(d);
     }
 
+
+    #region "Print Current Values (used in manual resiliency testing)"
+
+    DisplayHelper.WriteLine($"Do you want to print the existing values of all grains? Y/y = yes, any other key = No");
+    var printVals = Console.ReadKey().Key == ConsoleKey.Y;
+    Console.WriteLine();
+    if (printVals)
+    {
+        foreach (var row in numberAndGrainPosts)
+        {
+            var lastVal = await testCalls.GetGrainData(row.GrainId);
+            if (lastVal != null)
+            {
+                var dtFormatted = lastVal.DateTimeReceived.ToString(dateTimeFormat, CultureInfo.InvariantCulture);
+                Console.WriteLine($"{row.GrainId.ToString().PadRight(3)}:{lastVal.Number.ToString().PadRight(3)}: {dtFormatted}");
+            }
+            else
+            {
+                Console.WriteLine($"{row.GrainId}: null");
+            }
+        }
+    }
+
+    #endregion
+
+
     ConsoleKey consoleKey = ConsoleKey.Y;
 
     bool hasAlreadyRun = false;
     bool shouldWaitForOtherConsoles = true;
-
+    
+    // MAIN TEST LOOP
     while (consoleKey == ConsoleKey.Y)
     {
 
@@ -109,13 +142,22 @@ try
         Stopwatch st = new Stopwatch();
         st.Start();
 
-        // Send the data
-        foreach (var row in numberAndGrainPosts)
+        // Warm up grains
+        if (useMultiThreading)
         {
-            taskList.Add(testCalls.WarmUp(row.GrainId));
+            foreach (var row in numberAndGrainPosts)
+            {
+                taskList.Add(testCalls.WarmUp(row.GrainId));
+            }
+            Task.WaitAll(taskList.ToArray());
         }
-
-        Task.WaitAll(taskList.ToArray());
+        else
+        {
+            foreach (var row in numberAndGrainPosts)
+            {
+                testCalls.WarmUp(row.GrainId);
+            }
+        }
 
         st.Stop();
         DisplayHelper.WriteLine($"Warm up time - {numberOfGrains} grains = {st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
@@ -131,19 +173,28 @@ try
         st.Reset();
         st.Start();
 
-        // Send the data
-        foreach (var row in numberAndGrainPosts)
-        {
-            resetTaskList.Add(testCalls.Reset(row.GrainId));
-        }
 
-        Task.WaitAll(resetTaskList.ToArray());
+        // Reset data
+        if (useMultiThreading)
+        {
+            foreach (var row in numberAndGrainPosts)
+            {
+                resetTaskList.Add(testCalls.Reset(row.GrainId));
+            }
+            Task.WaitAll(resetTaskList.ToArray());
+        }
+        else
+        {
+            foreach (var row in numberAndGrainPosts)
+            {
+                testCalls.Reset(row.GrainId);
+            }
+        }
 
         st.Stop();
         DisplayHelper.WriteLine($"Reset time - {numberOfGrains} grains = {st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
 
         #endregion
-
 
 
 
@@ -186,17 +237,26 @@ try
         st.Reset();
         st.Start();
         // Data starts sending before WaitAll
-        foreach (var row in numberAndGrainPosts)
+        if (useMultiThreading)
         {
-            taskList.Add(testCalls.Post(row));
+            foreach (var row in numberAndGrainPosts)
+            {
+                taskList.Add(testCalls.Post(row));
+            }
+            Task.WaitAll(taskList.ToArray());
         }
-
-        Task.WaitAll(taskList.ToArray());
+        else
+        {
+            foreach (var row in numberAndGrainPosts)
+            {
+                testCalls.Post(row);
+            }
+        }
 
         st.Stop();
         msTaken.Add(st.ElapsedMilliseconds);
 
-        
+
         DisplayHelper.WriteLine($"Client Task time - {numberOfGrains} grains ={st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
         var clientRate = (decimal)(numberOfGrains) / (decimal)(st.ElapsedMilliseconds / (decimal)1000);
         var clientRateRounded = decimal.Round(clientRate, 2, MidpointRounding.AwayFromZero);
@@ -258,8 +318,8 @@ try
             gCheckTotal++;
             var tmp = await testCalls.GetGrainData(i);
 
-            if (tmp == null || 
-                tmp.DateTimeReceived == new DateTime() || 
+            if (tmp == null ||
+                tmp.DateTimeReceived == new DateTime() ||
                 tmp.DateTimeReceived < startTimeUtc)
             {
                 gCheckFails++;
@@ -281,8 +341,8 @@ try
             }
         }
 
-        var minDateString = minNumberInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-        var maxDateString = maxNumberInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+        var minDateString = minNumberInfo.DateTimeReceived.ToString(dateTimeFormat, CultureInfo.InvariantCulture);
+        var maxDateString = maxNumberInfo.DateTimeReceived.ToString(dateTimeFormat, CultureInfo.InvariantCulture);
 
         DisplayHelper.WriteLine($"Min: Grain {minNumberInfo.Number.ToString().PadRight(5)}: Date:{minDateString}");
         DisplayHelper.WriteLine($"Max: Grain {maxNumberInfo.Number.ToString().PadRight(5)}: Date:{maxDateString}");

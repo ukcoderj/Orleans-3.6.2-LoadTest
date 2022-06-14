@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Azure;
 using LoadTest.Grains;
 using LoadTest.SharedBase.Helpers;
+using LoadTest.SharedBase.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -15,7 +16,16 @@ using Orleans.Versions.Selector;
 
 Console.WriteLine("Starting Orleans Silo....");
 
+
 DisplayHelper.WriteLine("This setup uses clustering. *** Remember to manually create a table called 'OrleansSiloInstances' in the appropriate azure table storage. ***", ConsoleColor.Yellow);
+
+DisplayHelper.WriteLine("One storage per silo is faster, but can lose data if the silo goes down. A better strategy is needed!");
+DisplayHelper.WriteLine("Use one storage account per silo? Y = yes, anything else = no");
+
+bool useOneStoragePerSilo = Console.ReadKey().Key == ConsoleKey.Y;
+
+
+
 
 try
 {
@@ -87,9 +97,19 @@ try
         storageIndex = consoleNumber % grainStores.Count() - 1;
     }
 
-    StorageConnectionInfo grainStorageInfo = grainStores[storageIndex];
+    StorageConnectionInfo grainStorageInfo = null;
+    if (useOneStoragePerSilo)
+    {
+        // WARNING: This is fast, but doesn't handle silo's going down well 
+        //          Can result in loss of data
+        grainStorageInfo = grainStores[storageIndex]; // Even distribution (storage acct/silo) 
+    }
+    else
+    {
+        grainStorageInfo = grainStores[0]; // One Store
+    }
 
-
+ 
 
     var clusterStorageAccountName = config.GetValue<string>("StorageAccount:Cluster:AccountName");
     var clusterStorageAccountUrlString = $"https://{clusterStorageAccountName}.table.core.windows.net/OrleansSiloInstances";
@@ -161,14 +181,3 @@ Console.ReadLine();
 
 
 
-public class StorageConnectionInfo
-{
-    public StorageConnectionInfo(string url, string sasToken)
-    {
-        StorageUri = new Uri(url);
-        SasCredential = new AzureSasCredential(sasToken);
-    }
-
-    public Uri StorageUri { get; set; }
-    public AzureSasCredential SasCredential { get; set; }
-}
