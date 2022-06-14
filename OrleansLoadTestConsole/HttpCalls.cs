@@ -27,7 +27,12 @@ namespace OrleansLoadTestConsole
 
         public async Task WarmUp(int grainId)
         {
-            throw new NotImplementedException();
+            // Not implemented
+        }
+
+        public async Task Reset(int grainId)
+        {
+            // Not implemented
         }
 
         public async Task Post(DataClass data)

@@ -101,6 +101,8 @@ try
         DisplayHelper.WriteLine($"Great! Set up for grains {minGrainNumber}-{maxGrainNumber}");
 
 
+        #region "Warm Up"
+
         DisplayHelper.WriteLine($"Warming up grains {minGrainNumber}-{maxGrainNumber}...", ConsoleColor.Yellow);
         List<Task> taskList = new List<Task>();
 
@@ -118,6 +120,32 @@ try
         st.Stop();
         DisplayHelper.WriteLine($"Warm up time - {numberOfGrains} grains = {st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
 
+        #endregion
+
+
+        #region "Reset Grains"
+
+        DisplayHelper.WriteLine($"Resetting grains {minGrainNumber}-{maxGrainNumber}...", ConsoleColor.Yellow);
+        List<Task> resetTaskList = new List<Task>();
+
+        st.Reset();
+        st.Start();
+
+        // Send the data
+        foreach (var row in numberAndGrainPosts)
+        {
+            resetTaskList.Add(testCalls.Reset(row.GrainId));
+        }
+
+        Task.WaitAll(resetTaskList.ToArray());
+
+        st.Stop();
+        DisplayHelper.WriteLine($"Reset time - {numberOfGrains} grains = {st.ElapsedMilliseconds}ms", ConsoleColor.Yellow);
+
+        #endregion
+
+
+
 
         if (!hasAlreadyRun)
         {
@@ -129,6 +157,10 @@ try
 
         if (shouldWaitForOtherConsoles)
         {
+            Console.WriteLine();
+            DisplayHelper.WriteLine("Press enter when all consoles are ready to proceed (will wait max 30s)");
+            Console.ReadLine();
+
             DisplayHelper.WriteLine("Wait for the 0 or 30s mark to start", ConsoleColor.Yellow);
 
             while (1 == 1)
@@ -150,7 +182,7 @@ try
 
         // Send the data
         DisplayHelper.WriteLine("Sending data (not logging for speed)...", ConsoleColor.Cyan);
-
+        DateTime startTimeUtc = DateTime.UtcNow;
         st.Reset();
         st.Start();
         // Data starts sending before WaitAll
@@ -176,7 +208,7 @@ try
         if (shouldWaitForOtherConsoles)
         {
 
-            DisplayHelper.WriteLine("Do you want to get an accurate reading for multiple consoles (Y/N)?");
+            DisplayHelper.WriteLine("Do you want to get an accurate reading for multiple consoles (Y/N)? Dont press enter!");
 
             if (Console.ReadKey().Key == ConsoleKey.Y)
             {
@@ -213,16 +245,26 @@ try
             maxGrainNumToCheck = maxGrainNumber;
         }
 
+        DisplayHelper.WriteLine("Checking back through grains...", ConsoleColor.Yellow);
 
         NumberInfo minNumberInfo = null;
         NumberInfo maxNumberInfo = null;
 
+        int gCheckTotal = 0;
+        int gCheckFails = 0;
+
         for (int i = minGrainNumToCheck; i <= maxGrainNumToCheck; i++)
         {
+            gCheckTotal++;
             var tmp = await testCalls.GetGrainData(i);
 
-            if (tmp == null || tmp.DateTimeReceived == new DateTime())
+            if (tmp == null || 
+                tmp.DateTimeReceived == new DateTime() || 
+                tmp.DateTimeReceived < startTimeUtc)
+            {
+                gCheckFails++;
                 continue;
+            }
 
             if (minNumberInfo == null && maxNumberInfo == null)
             {
@@ -243,7 +285,8 @@ try
         var maxDateString = maxNumberInfo.DateTimeReceived.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
         DisplayHelper.WriteLine($"Min: Grain {minNumberInfo.Number.ToString().PadRight(5)}: Date:{minDateString}");
-        DisplayHelper.WriteLine($"Min: Grain {maxNumberInfo.Number.ToString().PadRight(5)}: Date:{maxDateString}");
+        DisplayHelper.WriteLine($"Max: Grain {maxNumberInfo.Number.ToString().PadRight(5)}: Date:{maxDateString}");
+        DisplayHelper.WriteLine($"Checked: {gCheckTotal} total, ({gCheckFails} fails)");
 
         TimeSpan spanMinToMax = maxNumberInfo.DateTimeReceived - minNumberInfo.DateTimeReceived;
         var msMinToMax = spanMinToMax.TotalMilliseconds;

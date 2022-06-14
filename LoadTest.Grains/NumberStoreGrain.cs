@@ -48,6 +48,12 @@ namespace LoadTest.Grains
             return Task.CompletedTask;
         }
 
+        public async Task ResetState()
+        {
+            var inputUpdated = new NumberInfo(0, new DateTime());
+            this._state.State = inputUpdated;
+            await this._state.WriteStateAsync();
+        }
 
         public Task<NumberInfo> GetState() => Task.FromResult(this._state.State);
 

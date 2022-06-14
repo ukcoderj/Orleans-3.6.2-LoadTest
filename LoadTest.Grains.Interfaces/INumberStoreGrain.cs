@@ -13,6 +13,8 @@ namespace LoadTest.Grains.Interfaces
     {
         Task WarmUp();
 
+        Task ResetState();
+
         Task<NumberInfo> GetState();
 
         Task UpdateNumberInfo(NumberInfo input);

@@ -53,6 +53,19 @@ namespace OrleansLoadTestConsole
 
         }
 
+        public async Task Reset(int grainId)
+        {
+            try
+            {
+                var grain = _client.GetGrain<INumberStoreGrain>(grainId);
+                await grain.ResetState();
+            }
+            catch (Exception ex)
+            {
+                DisplayHelper.WriteLine(ex.ToString(), ConsoleColor.Red);
+            }
+        }
+
         public async Task Post(DataClass data)
         {
             try

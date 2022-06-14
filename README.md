@@ -102,7 +102,25 @@ Azure VM - Standard DS3 v2 (4 vcpus, 14 GiB memory)
   Run 5: Data 16K/s
   Run 6: Data 18K/s
 
-  Need to reset to be 100% sure.
+  
+  D8s v5 - 5 Silos, 1 Console
+
+  Re running tests with reset first to be 100% sure of no missed updates.
+  100K Test
+  Warmup & reset - several fails. Data 7K/s - 11 fails
+  Next run Data 7K/s - 0 fails
+
+ 20K Test
+  Completely fresh (all previous data deleted 20K test)
+  Run 1: Warm up 2K/s. Reset 11.2K/s. Data 4K/s (no fails) - CPU
+  Run 2: Warm up 93K/s. Reset 0.9K/s. Data 11.5K/s (no fails)
+
+
+  3 Silos - Data consistently 13.5K/s (warm up max'd at 121K/s)
+
+
+
+WARNING: The strategy of using 1 storage per silo causes problems with data loss if that silo goes down! Better storage strategy required.
 
 
 

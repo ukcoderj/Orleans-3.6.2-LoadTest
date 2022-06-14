@@ -10,6 +10,7 @@ namespace OrleansLoadTestConsole
     public interface ITestCalls
     {
         Task WarmUp(int grainId);
+        Task Reset(int grainId);
         Task Post(DataClass data);
         Task<NumberInfo> GetGrainData(int grainId);
     }
