@@ -12,12 +12,18 @@ The main parts for this project are
 
 - When running, the silo will load references to table storage for both the cluster and silo data
 
-- In the event there are more silos than storage accounts, the storage accounts will be shared as evenly as possible.
+- In the event there are more silos than storage accounts, the storage accounts will be shared as evenly as possible (see warning!).
 
 2. `OrleansLoadTestConsole` can be used to point to the cluster and send in information.
 
 3. `OrleansLoadTest` is a Web API using Orleans, but this has not been used for deployed testing to reduce latency of calling an API. If you use this, you will need to add your own application insights key. 
 You will also need to copy the content of `example-secrets.json` to the secrets file and adjust accordingly.
+
+## WARNING
+
+If you choose the 'distributing multiple storage accounts between Silos, be aware that this is not done properly. Its good enough for this load test, but it's not resilient.
+
+You should use a 'custom persistence provider' to shard properly and ensure data will load back nicely in the event of silo failures.
 
 ## What does the project do?
 
