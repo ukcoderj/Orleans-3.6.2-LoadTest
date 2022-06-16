@@ -60,7 +60,7 @@ After discussing with the Microsoft Team, I learned that one cosole using Tasks 
 
 Run on clean Azure D8s v5 Windows 2022 VM
 
-### Single Storage Tests
+## Single Storage Tests
 
 NOTES: 
 - CPU max'd out at 100% (serialization?)
@@ -76,11 +76,11 @@ NOTES:
 - No save calls - Around 100K/s
 
 
-### Split Storage Tests (one storage account per silo)
+## Split Storage Tests (one storage account per silo)
 
 NOTES: 
 - CPU max'd out at 100% (serialization?)
-- Working this way cannot handle silo's going down (data loss)
+- Working this way cannot handle silo's going down (data loss). Should use a 'custom persistence provider' to shard info.
 
 5 Silos
 Warm up (first time) = 2K-6K/s - seems standard for first time instantiation (often nearer 2).
@@ -89,11 +89,14 @@ Warm up (first time) = 2K-6K/s - seems standard for first time instantiation (of
 -20k - Subsequently client sees 15-18K/s, Server sees 15-22K/s (i.e. storage isn't holiding up return)
 
 -50K - Client sees 16-19K/s, Server sees 18-21K/s
+
 -100K - First run, Client sees 13K/s, Server sees 14K/s
+
 -100K - Subsequently, Client sees 16K/s, Server sees 18K/s
+
 -100K - Subsequently, Client sees 9K/s, Server sees 20K/s - 1 fail! (storage timeout which crashed a silo)
 
-- No Save Calls approx 100K/s
+-No Save Calls approx 100K/s
 
 
 

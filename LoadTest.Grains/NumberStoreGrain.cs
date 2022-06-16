@@ -13,6 +13,23 @@ using System.Threading.Tasks;
 
 namespace LoadTest.Grains
 {
+
+    // Use separate stores to ensure NumberStoreGrain doesn't affect StringStoreGrain
+    //[StorageProvider(ProviderName = "LoadTestNumbersTableStorage2")]
+    //public class StringStoreGrain : Orleans.Grain, INumberStoreGrain
+    //{
+    //    private readonly ILogger logger;
+    //    private readonly IPersistentState<StringInfo> _state;
+
+    //    public StringStoreGrain(ILogger<StringStoreGrain> logger,
+    //        [PersistentState("stringinfo", "LoadTestNumbersTableStorage2")] IPersistentState<StringInfo> state)
+    //    {
+    //        this.logger = logger;
+    //        this._state = state;
+    //    }
+    //}
+
+
     [StorageProvider(ProviderName = "LoadTestNumbersTableStorage1")]
     public class NumberStoreGrain : Orleans.Grain, INumberStoreGrain
     {
