@@ -66,14 +66,14 @@ NOTES:
 - CPU max'd out at 100% (serialization?)
 
 3 Silos
-- 20K 3 silos 1 storage - 9.6K/s, but client sees it as 4-5K/s - Info is getting in fast, but storage is holding up returning data
+- 20K 3 silos 1 storage - 9.6k/s, but client sees it as 4-5k/s - Info is getting in fast, but storage is holding up returning data
 - 100K crashes
 
 5 Silos
 - 100K - Crashes - Storage Busy
-- 20K - 14K/s, but client sees it as 2.7K/s - Storage is holding up returning data
+- 20K - 14k/s, but client sees it as 2.7k/s - Storage is holding up returning data
 
-- No save calls - Around 100K/s
+- No save calls - Around 100k/s
 
 
 ## Split Storage Tests (one storage account per silo)
@@ -83,20 +83,20 @@ NOTES:
 - Working this way cannot handle silo's going down (data loss). Should use a 'custom persistence provider' to shard info.
 
 5 Silos
-Warm up (first time) = 2K-6K/s - seems standard for first time instantiation (often nearer 2).
+Warm up (first time) = 2K-6k/s - seems standard for first time instantiation (often nearer 2).
 
--20k - First run Client sees 5.4K, Server sees 7K/s
--20k - Subsequently client sees 15-18K/s, Server sees 15-22K/s (i.e. storage isn't holiding up return)
+-20k - First run Client sees 5.4K, Server sees 7k/s
+-20k - Subsequently client sees 15-18k/s, Server sees 15-22k/s (i.e. storage isn't holiding up return)
 
--50K - Client sees 16-19K/s, Server sees 18-21K/s
+-50K - Client sees 16-19k/s, Server sees 18-21k/s
 
--100K - First run, Client sees 13K/s, Server sees 14K/s
+-100K - First run, Client sees 13k/s, Server sees 14k/s
 
--100K - Subsequently, Client sees 16K/s, Server sees 18K/s
+-100K - Subsequently, Client sees 16k/s, Server sees 18k/s
 
--100K - Subsequently, Client sees 9K/s, Server sees 20K/s - 1 fail! (storage timeout which crashed a silo)
+-100K - Subsequently, Client sees 9k/s, Server sees 20k/s - 1 fail! (storage timeout which crashed a silo)
 
--No Save Calls approx 100K/s
+-No Save Calls approx 100k/s
 
 
 
