@@ -96,6 +96,10 @@ Warm up (first time) = 2K-6k/s - seems standard for first time instantiation (of
 
 -100K - Subsequently, Client sees 9k/s, Server sees 20k/s - 1 fail! (storage timeout which crashed a silo)
 
+-100K Sharded with 10 storage accounts 
+6k/s warm up intially, then 92k/s
+Save rates - client sees 23.5k/s, Server sees 23.5k (0 fails)
+
 -No Save Calls approx 100k/s
 
 
