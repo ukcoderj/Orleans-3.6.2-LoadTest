@@ -21,9 +21,9 @@ You will also need to copy the content of `example-secrets.json` to the secrets 
 
 ## WARNING
 
-If you choose the 'distributing multiple storage accounts between Silos, be aware that this is not done properly. Its good enough for this load test, but it's not resilient.
+If you choose the 'distributing multiple storage accounts between Silos, be aware that this is not done properly. Its good enough for this load test, but it's not resilient. 
 
-You should use a 'custom persistence provider' to shard properly and ensure data will load back nicely in the event of silo failures.
+You should use a 'custom persistence provider' to shard properly and ensure data will load back nicely in the event of silo failures. See my other repo -> [Sharded Orleans Table Storage](https://github.com/JsAndDotNet/OrleansShardedTableStorage) for an example of this.
 
 ## What does the project do?
 
