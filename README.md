@@ -60,9 +60,12 @@ After discussing with the Microsoft Team, I learned that one cosole using Tasks 
 
 Run on clean Azure D8s v5 Windows 2022 VM
 
+For best results, see the final section.
+
 ## Single Storage Tests
 
 NOTES: 
+- Saving is one of the key bottlenecks in an actor system. See Sharded Storage results below for a better impression.
 - CPU max'd out at 100% (serialization?)
 
 3 Silos
@@ -76,7 +79,7 @@ NOTES:
 - No save calls - Around 100k/s
 
 
-## Split Storage Tests (one storage account per silo)
+## Split/ Sharded Storage Tests (one storage account per silo)
 
 NOTES: 
 - CPU max'd out at 100% (serialization?)
@@ -96,11 +99,13 @@ Warm up (first time) = 2K-6k/s - seems standard for first time instantiation (of
 
 -100K - Subsequently, Client sees 9k/s, Server sees 20k/s - 1 fail! (storage timeout which crashed a silo)
 
+## Properly Sharded storage using [OrleansShardedStorage](https://github.com/JsAndDotNet/OrleansShardedTableStorage)
+
 -100K Sharded with 10 storage accounts 
 6k/s warm up intially, then 92k/s
 Save rates - client sees 23.5k/s, Server sees 23.5k (0 fails)
 
--No Save Calls approx 100k/s
+-No Save Calls approx 100-120k/s
 
 
 
